@@ -1,4 +1,25 @@
+
 // server.js — Ph1taka backend (CommonJS) — UPDATED: MHV ⇄ VPK (MHV accepted as alias)
+const fs = require('fs');
+const path = require('path');
+
+function bootlog(...a) {
+  try {
+    fs.appendFileSync(
+      path.join(__dirname, 'runtime.log'),
+      `[${new Date().toISOString()}] ${a.map(x => (x && x.stack) ? x.stack : String(x)).join(' ')}\n`
+    );
+  } catch (_) {}
+  console.log(...a);
+}
+
+process.on('uncaughtException', (e) => bootlog('UNCAUGHT', e));
+process.on('unhandledRejection', (e) => bootlog('UNHANDLED', e));
+
+bootlog('BOOT OK');
+bootlog('PORT', process.env.PORT);
+bootlog('FIREBASE_ADMIN_B64 length', (process.env.FIREBASE_ADMIN_B64 || '').length);
+
 require('dotenv').config();
 
 // ✅ Guard: older Node may not support setDefaultResultOrder
