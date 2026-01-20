@@ -19,6 +19,6 @@ uploads/
 logs/
 tmp/
 
-# Build outputs (if you have any)
+# Build outputs
 dist/
 build/
