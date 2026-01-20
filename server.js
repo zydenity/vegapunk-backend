@@ -3,6 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 
+require('dotenv').config(); // ✅ move up
+
 function bootlog(...a) {
   try {
     fs.appendFileSync(
@@ -43,11 +45,11 @@ const cors = require('cors');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const fs = require('fs');
+
 const admin = require('firebase-admin');
 const { z } = require('zod');
 const makeKycRoutes = require('./routes/kyc');
-const path = require('path');
+
 const makeAdminRouter = require('./routes/admin'); // 👈 NEW
 const makeAdminRewardCreditsRouter = require('./routes/admin_reward_credits');
 const makeRewardCreditsRouter = require('./routes/reward_credits');
