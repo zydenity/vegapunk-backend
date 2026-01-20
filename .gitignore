@@ -21,3 +21,6 @@ tmp/
 # Build outputs (if you have any)
 dist/
 build/
+serviceAccountKey.json
+keys/*.json
+*.json
