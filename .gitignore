@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+
+# Env / Secrets
+.env
+.env.*
+serviceAccountKey.json
+*.pem
+*.key
+
+# Uploads / runtime files
+uploads/
+logs/
+tmp/
+
+# Build outputs (if you have any)
+dist/
+build/
