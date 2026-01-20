@@ -25,3 +25,9 @@ tmp/
 # Build outputs
 dist/
 build/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
