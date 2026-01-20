@@ -32,7 +32,6 @@ const makeAdminRewardCreditsRouter = require('./routes/admin_reward_credits');
 const makeRewardCreditsRouter = require('./routes/reward_credits');
 const { evaluateRewardCreditsForUser } = require('./lib/reward_credits');
 
-
 // ethers v6
 const {
   HDNodeWallet,
@@ -68,7 +67,6 @@ const DEPOSIT_SWEEP_MAX_TOPUP_BNB = Number(process.env.DEPOSIT_SWEEP_MAX_TOPUP_B
 const DEPOSIT_SWEEP_GAS_BUFFER_PCT = Number(process.env.DEPOSIT_SWEEP_GAS_BUFFER_PCT || 1.25);
 const DEPOSIT_SWEEP_CONFS = Number(process.env.DEPOSIT_SWEEP_CONFS || WITHDRAW_CONFS || 1);
 
-
 // ── Stake split recipients (USDT) ──
 const SPLIT_REF_LEAD_ADDR = (process.env.SPLIT_REF_LEAD_ADDR || '').trim();
 const SPLIT_LEADER_SUPPORT_ADDR = (process.env.SPLIT_LEADER_SUPPORT_ADDR || '').trim();
@@ -87,8 +85,6 @@ app.use(cors({ origin: true, credentials: true }));
 const BODY_LIMIT = (process.env.BODY_LIMIT || '50mb').trim();
 app.use(express.json({ limit: BODY_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT }));
-
-
 
 // ✅ Return clean errors for payload/json problems (helps Flutter show real reason)
 app.use((err, req, res, next) => {
@@ -248,17 +244,33 @@ async function creditDepositAndWebhook({ depositId, amount, txHash, meta }) {
   }
 }
 
+/* ───────────────────────── Firebase Admin init ─────────────────────────
+   ✅ Hostinger-friendly: supports FIREBASE_ADMIN_B64 env var (base64 JSON)
+   ✅ Local/VPS fallback: GOOGLE_APPLICATION_CREDENTIALS / FIREBASE_ADMIN_KEY / ./serviceAccountKey.json
+*/
 /* ───────────────────────── Firebase Admin init ───────────────────────── */
-const keyPath =
-  process.env.GOOGLE_APPLICATION_CREDENTIALS ||
-  process.env.FIREBASE_ADMIN_KEY ||
-  './serviceAccountKey.json';
+let serviceAccount = null;
 
-if (!fs.existsSync(keyPath)) {
-  console.error(`\n[FATAL] Firebase Admin key not found at: ${keyPath}\n`);
+if (process.env.FIREBASE_ADMIN_B64) {
+  serviceAccount = JSON.parse(
+    Buffer.from(process.env.FIREBASE_ADMIN_B64, 'base64').toString('utf8')
+  );
+} else {
+  const keyPath =
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+    process.env.FIREBASE_ADMIN_KEY ||
+    './serviceAccountKey.json';
+
+  if (fs.existsSync(keyPath)) {
+    serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+  }
+}
+
+if (!serviceAccount) {
+  console.error('[FATAL] Firebase Admin credentials missing. Set FIREBASE_ADMIN_B64.');
   process.exit(1);
 }
-const serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
 /* ───────────────────────── Helpers ───────────────────────── */
@@ -310,6 +322,7 @@ app.use(
 
 app.use('/v1/reward-credits', makeRewardCreditsRouter({ db, requireAuth }));
 app.use('/v1/rewards',        makeRewardCreditsRouter({ db, requireAuth })); // ✅ Flutter uses this
+
 function normSource(input) {
   const s = String(input || 'any').toLowerCase();
   return (s === 'coinsph' || s === 'binance' || s === 'any') ? s : 'any';
@@ -812,8 +825,6 @@ async function createUser(firebaseUid, phone) {
 /* ───────────────────────── PUBLIC email OTP router (no auth) ───────────────────────── */
 app.use('/auth', makeAuthEmailRouter(db));
 
-
-
 /* ───────────────────────── Phone OTP (legacy) ───────────────────────── */
 app.post('/otp/send', async (req, res) => {
   try {
@@ -1053,14 +1064,13 @@ if (process.env.MOCK_DEPOSITS === '1') {
 
       const address = deriveEvmAddress(idx);
 
-const [ins] = await db.query(
-  `INSERT INTO crypto_deposits
-   (user_id, chain, asset, source, network_symbol, address, address_index,
-    amount_expected, required_confirmations, status)
-   VALUES (?,?,?,?,?,?,?,?,?, 'pending')`,
-  [req.userId, chain, asset, safeSource, chain, address, idx, null, requiredConfs]
-);
-
+      const [ins] = await db.query(
+        `INSERT INTO crypto_deposits
+         (user_id, chain, asset, source, network_symbol, address, address_index,
+          amount_expected, required_confirmations, status)
+         VALUES (?,?,?,?,?,?,?,?,?, 'pending')`,
+        [req.userId, chain, asset, safeSource, chain, address, idx, null, requiredConfs]
+      );
 
       res.json({
         id: ins.insertId,
@@ -1450,7 +1460,8 @@ app.post('/v1/wallet/transfer', requireAuth, async (req, res) => {
         ]
       );
       const ledgerId = ledgerRes.insertId;
-await evaluateRewardCreditsForUser(conn, userId);
+
+      await evaluateRewardCreditsForUser(conn, userId);
 
       await conn.commit();
       conn.release();
