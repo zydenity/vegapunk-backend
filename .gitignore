@@ -10,6 +10,7 @@ pnpm-debug.log*
 .env
 .env.*
 serviceAccountKey.json
+keys/
 *.pem
 *.key
 
@@ -21,6 +22,3 @@ tmp/
 # Build outputs (if you have any)
 dist/
 build/
-serviceAccountKey.json
-keys/*.json
-*.json
