@@ -44,7 +44,8 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
+
 
 const admin = require('firebase-admin');
 const { z } = require('zod');
